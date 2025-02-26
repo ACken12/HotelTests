@@ -5,7 +5,7 @@ using Hotel.src.Core.Interfaces.IRepository;
 using Moq;
 
 
-namespace HotelTest2
+namespace HotelTests.Application.Services
 {
     public class Tests
     {
