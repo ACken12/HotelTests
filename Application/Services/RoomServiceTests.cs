@@ -174,6 +174,7 @@ namespace HotelTests.Application.Services
             Assert.That(result.First().ROOMNUMBER, Is.EqualTo("101"));
             Assert.That(result.Last().ROOMNUMBER, Is.EqualTo("102"));
         }
+
         [Test]
         public void SearchRooms_ShouldReturnRoomsAvailableToday_WhenNoDateParametersProvided()
         {
@@ -186,9 +187,8 @@ namespace HotelTests.Application.Services
             };
 
             var today = DateTime.Today;
-            var endDate = today.AddDays(1);
+            var endDate = DateTime.Today;
 
-            // Mocking that the method should return rooms that are available today
             _roomRepositoryMock.Setup(repo => repo.HasReservationsInDateRange(today, endDate)).Returns(rooms.Where(r => r.STATUS == RoomStatus.DISPONIBLE));
 
             // Act
