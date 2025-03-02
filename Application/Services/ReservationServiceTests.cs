@@ -2,9 +2,7 @@
 using Hotel.src.Core.Entities;
 using Hotel.src.Core.Enums;
 using Hotel.src.Core.Interfaces.IRepository;
-using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using Moq;
-using Sprache;
 
 namespace HotelTests.Application.Services
 {
