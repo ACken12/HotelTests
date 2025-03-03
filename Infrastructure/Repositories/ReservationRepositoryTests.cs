@@ -14,21 +14,26 @@ namespace HotelTests.Infrastructure.Repositories
         private Mock<ApplicationDbContext> _mockDbContext;
         private Mock<DbSet<Reservation>> _mockReservationsDbSet;
         private IReservationRepository _reservationRepository;
+        private Mock<DbSet<ReservationRoom>> _mockReservationRoomsDbSet;
+
 
         [SetUp]
         public void Setup()
         {
             // Configuración del mock para DbSet<Reservation>
             _mockReservationsDbSet = new Mock<DbSet<Reservation>>();
+            var emptyReservations = Enumerable.Empty<Reservation>().AsQueryable();
+            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.Provider).Returns(emptyReservations.Provider);
+            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.Expression).Returns(emptyReservations.Expression);
+            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.ElementType).Returns(emptyReservations.ElementType);
+            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.GetEnumerator()).Returns(emptyReservations.GetEnumerator());
 
-            // Configurar los métodos para simular IQueryable
-            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.Provider).Returns(Enumerable.Empty<Reservation>().AsQueryable().Provider);
-            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.Expression).Returns(Enumerable.Empty<Reservation>().AsQueryable().Expression);
-            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.ElementType).Returns(Enumerable.Empty<Reservation>().AsQueryable().ElementType);
-            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.GetEnumerator()).Returns(Enumerable.Empty<Reservation>().GetEnumerator());
+            // Configuración del mock para DbSet<ReservationRoom>
+            _mockReservationRoomsDbSet = new Mock<DbSet<ReservationRoom>>();
 
             _mockDbContext = new Mock<ApplicationDbContext>();
             _mockDbContext.Setup(c => c.Reservations).Returns(_mockReservationsDbSet.Object);
+            _mockDbContext.Setup(c => c.ReservationRooms).Returns(_mockReservationRoomsDbSet.Object);
 
             _reservationRepository = new ReservationRepository(_mockDbContext.Object);
         }
@@ -36,13 +41,10 @@ namespace HotelTests.Infrastructure.Repositories
         [Test]
         public void Add_ShouldAddReservationSuccessfully()
         {
-            // Arrange
             var newReservation = new Reservation(1, DateTime.Today, DateTime.Today.AddDays(3), ReservationStatus.Confirmada);
 
-            // Act
             var result = _reservationRepository.Add(newReservation);
 
-            // Assert
             _mockReservationsDbSet.Verify(u => u.Add(newReservation), Times.Once);
             _mockDbContext.Verify(c => c.SaveChanges(), Times.Once);
 
@@ -52,20 +54,16 @@ namespace HotelTests.Infrastructure.Repositories
         [Test]
         public void GetById_ShouldReturnNull_WhenReservationDoesNotExist()
         {
-            // Arrange
             _mockDbContext.Setup(c => c.Reservations).Returns(_mockReservationsDbSet.Object);
 
-            // Act
             var result = _reservationRepository.GetById(99);
 
-            // Assert
             Assert.That(result, Is.Null);
         }
 
         [Test]
         public void GetByClientId_ShouldReturnReservations_WhenClientHasReservations()
         {
-            // Arrange
             var reservations = new List<Reservation>
             {
                 new Reservation(1, DateTime.Today, DateTime.Today.AddDays(3), ReservationStatus.Confirmada) { USERID = 1 }
@@ -78,30 +76,24 @@ namespace HotelTests.Infrastructure.Repositories
 
             _mockDbContext.Setup(c => c.Reservations).Returns(_mockReservationsDbSet.Object);
 
-            // Act
             var result = _reservationRepository.GetByClientId(1);
 
-            // Assert
             Assert.That(result.Count, Is.EqualTo(1));
         }
 
         [Test]
         public void GetByClientId_ShouldReturnEmptyList_WhenNoReservationsExist()
         {
-            // Arrange
             _mockDbContext.Setup(c => c.Reservations).Returns(_mockReservationsDbSet.Object);
 
-            // Act
             var result = _reservationRepository.GetByClientId(1);
 
-            // Assert
             Assert.That(result, Is.Empty);
         }
 
         [Test]
         public void GetByDateRange_ShouldReturnReservationsWithinRange()
         {
-            // Arrange
             var reservations = new List<Reservation>
             {
                 new Reservation(1, DateTime.Today, DateTime.Today.AddDays(3), ReservationStatus.Confirmada)
@@ -114,24 +106,78 @@ namespace HotelTests.Infrastructure.Repositories
 
             _mockDbContext.Setup(c => c.Reservations).Returns(_mockReservationsDbSet.Object);
 
-            // Act
             var result = _reservationRepository.GetByDateRange(DateTime.Today, DateTime.Today.AddDays(5));
 
-            // Assert
             Assert.That(result.Count, Is.EqualTo(1));
         }
 
         [Test]
         public void GetByDateRange_ShouldReturnEmptyList_WhenNoReservationsMatch()
         {
-            // Arrange
             _mockDbContext.Setup(c => c.Reservations).Returns(_mockReservationsDbSet.Object);
 
-            // Act
             var result = _reservationRepository.GetByDateRange(DateTime.Today.AddDays(10), DateTime.Today.AddDays(15));
 
-            // Assert
             Assert.That(result, Is.Empty);
+        }
+        [Test]
+        public void AddRoomInReservation_ShouldAddRoomSuccessfully()
+        {
+            var reservationRoom = new ReservationRoom { ReservationID = 1, RoomID = 101 };
+
+            var result = _reservationRepository.AddRoomInReservation(reservationRoom);
+
+            _mockReservationRoomsDbSet.Verify(r => r.Add(reservationRoom), Times.Once);
+            _mockDbContext.Verify(c => c.SaveChanges(), Times.Once);
+            Assert.That(result, Is.EqualTo(reservationRoom));
+        }
+        [Test]
+        public void AddRoomInReservation_NullReservationRoom_ShouldThrowArgumentNullException()
+        {
+            var ex = Assert.Throws<ArgumentNullException>(() => _reservationRepository.AddRoomInReservation(null));
+            Assert.That(ex.Message, Does.Contain("La relación de reserva y habitación no puede ser nula."));
+        }
+        [Test]
+        public void Update_ValidReservation_ShouldUpdateSuccessfully()
+        {
+            var reservation = new Reservation(1, DateTime.Today, DateTime.Today.AddDays(3), ReservationStatus.Confirmada);
+
+            _reservationRepository.Update(reservation);
+
+            _mockReservationsDbSet.Verify(r => r.Update(reservation), Times.Once);
+            _mockDbContext.Verify(c => c.SaveChanges(), Times.Once);
+        }
+        [Test]
+        public void Update_NullReservation_ShouldThrowArgumentNullException()
+        {
+            var ex = Assert.Throws<ArgumentNullException>(() => _reservationRepository.Update(null));
+            Assert.That(ex.Message, Does.Contain("La reserva no puede ser nula."));
+        }
+        [Test]
+        public void GetUpcomingReservations_ShouldReturnUpcomingReservations()
+        {
+            int daysAhead = 2;
+            DateTime today = DateTime.UtcNow.Date;
+            var upcomingReservation = new Reservation(1, today.AddDays(daysAhead), today.AddDays(daysAhead + 3), ReservationStatus.Confirmada);
+            var reservations = new List<Reservation> { upcomingReservation };
+            var queryableReservations = reservations.AsQueryable();
+            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.Provider).Returns(queryableReservations.Provider);
+            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.Expression).Returns(queryableReservations.Expression);
+            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.ElementType).Returns(queryableReservations.ElementType);
+            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.GetEnumerator()).Returns(queryableReservations.GetEnumerator());
+            _mockDbContext.Setup(c => c.Reservations).Returns(_mockReservationsDbSet.Object);
+
+            var result = _reservationRepository.GetUpcomingReservations(daysAhead);
+
+            Assert.That(result.Count, Is.EqualTo(1));
+            Assert.That(result.First().ID, Is.EqualTo(upcomingReservation.ID));
+        }
+
+        [Test]
+        public void GetUpcomingReservations_NegativeDaysAhead_ShouldThrowArgumentException()
+        {
+            var ex = Assert.Throws<ArgumentException>(() => _reservationRepository.GetUpcomingReservations(-1));
+            Assert.That(ex.Message, Does.Contain("El parámetro daysAhead no puede ser negativo."));
         }
     }
 }
