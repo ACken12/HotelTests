@@ -14,6 +14,7 @@ namespace HotelTests.Infrastructure.Repositories
     /// Unit tests for CustomerRepository using the AAA (Arrange, Act, Assert) pattern.
     /// </summary>
     [TestFixture]
+    [Author("Kendall Angulo", "kendallangulo01.com")]
     public class CustomerRepositoryTests
     {
         private Mock<ApplicationDbContext> _mockDbContext;
@@ -43,12 +44,12 @@ namespace HotelTests.Infrastructure.Repositories
             _mockDbContext.Setup(c => c.SaveChanges()).Returns(1);
 
             // Act: Call the AddCliente method through the repository interface.
-            var result = _repository.AddCliente(user);
+            var result = _repository.AddClient(user);
 
             // Assert: Verify that the user was added and that SaveChanges was called exactly once.
             _mockUsersDbSet.Verify(u => u.Add(user), Times.Once);
             _mockDbContext.Verify(c => c.SaveChanges(), Times.Once);
-            Assert.AreEqual(user, result);
+            Assert.That(result, Is.EqualTo(user));
         }
 
         /// <summary>
@@ -61,8 +62,11 @@ namespace HotelTests.Infrastructure.Repositories
             var user = new User { ID = 1, NAME = "Falle" };
             _mockDbContext.Setup(c => c.SaveChanges()).Throws(new Exception("Database error"));
 
-            // Act & Assert: Verify that an exception is thrown.
-            Assert.Throws<Exception>(() => _repository.AddCliente(user));
+            // Act Execute the action under test
+            var exception = Assert.Throws<Exception>(() => _repository.AddClient(user));
+
+            // Assert: Verify that an exception is thrown.
+            Assert.That(exception.Message, Is.EqualTo("Database error"));
             _mockUsersDbSet.Verify(u => u.Add(user), Times.Once);
             _mockDbContext.Verify(c => c.SaveChanges(), Times.Once);
         }
