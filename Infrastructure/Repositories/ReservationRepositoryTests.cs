@@ -110,7 +110,39 @@ namespace HotelTests.Infrastructure.Repositories
 
             Assert.That(result.Count, Is.EqualTo(1));
         }
+        [Test]
+        public void GetConfirmedReservations_ShouldReturnOnlyConfirmedReservationsWithinRange()
+        {
+            var reservations = new List<Reservation>
+            {
+                new Reservation(1, DateTime.Today, DateTime.Today.AddDays(3), ReservationStatus.Confirmada)
+            };
+            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.Provider).Returns(reservations.AsQueryable().Provider);
+            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.Expression).Returns(reservations.AsQueryable().Expression);
+            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.ElementType).Returns(reservations.AsQueryable().ElementType);
+            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.GetEnumerator()).Returns(reservations.GetEnumerator());
 
+            _mockDbContext.Setup(c => c.Reservations).Returns(_mockReservationsDbSet.Object);
+
+            var result = _reservationRepository.GetConfirmedReservations(DateTime.Today, DateTime.Today.AddDays(3));
+
+            Assert.That(result.All(r => r.STATUS == ReservationStatus.Confirmada), Is.True);
+        }
+        [Test]
+        public void GetConfirmedReservations_ShouldReturnEmptyList_WhenOnlyPaidReservationsExist()
+        {
+            var reservations = new List<Reservation>
+            {
+                new Reservation(1, DateTime.Today, DateTime.Today.AddDays(3), ReservationStatus.Pagada)
+            };
+            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.Provider).Returns(reservations.AsQueryable().Provider);
+            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.Expression).Returns(reservations.AsQueryable().Expression);
+            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.ElementType).Returns(reservations.AsQueryable().ElementType);
+            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.GetEnumerator()).Returns(reservations.GetEnumerator());
+            _mockDbContext.Setup(c => c.Reservations).Returns(_mockReservationsDbSet.Object);
+            var result = _reservationRepository.GetConfirmedReservations(DateTime.Today, DateTime.Today.AddDays(3));
+            Assert.That(result, Is.Empty);
+        }
         [Test]
         public void GetByDateRange_ShouldReturnEmptyList_WhenNoReservationsMatch()
         {
