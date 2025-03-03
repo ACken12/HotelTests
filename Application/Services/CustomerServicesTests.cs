@@ -5,6 +5,8 @@ using Moq;
 
 namespace HotelTests.Application.Services
 {
+    [TestFixture]
+    [Author("Kendall Angulo", "kendallangulo01.com")]
     public class CustomerServicesTests
     {
 
@@ -26,16 +28,15 @@ namespace HotelTests.Application.Services
             // Arrange: Create a test user and configure the mock to return it
             var testUser = new User { ID = 1, NAME = "John Doe" };
             _mockCustomerRepository
-                .Setup(repo => repo.AddCliente(testUser))
+                .Setup(repo => repo.AddClient(testUser))
                 .Returns(testUser);
+
 
             // Act: Call the RegisterCustomer method
             var result = _customerServices.RegisterCustomer(testUser);
 
             // Assert: Verify the result matches the expected user
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.ID, Is.EqualTo(testUser.ID));
-            Assert.That(result.NAME, Is.EqualTo(testUser.NAME));
+            Assert.That(result, Is.EqualTo(testUser)); /// <test type="Pass successfully">
         }
 
         /// <summary>
@@ -45,16 +46,17 @@ namespace HotelTests.Application.Services
         public void RegisterCustomer_ShouldReturnNull_WhenRepositoryReturnsNull()
         {
             // Arrange: Configure the mock repository to return null
-            var testUser = new User { ID = 2, NAME = "Jane Doe" };
+            User testUser = null;
+           
             _mockCustomerRepository
-                .Setup(repo => repo.AddCliente(testUser))
-                .Returns((User)null);
+                .Setup(repo => repo.AddClient(testUser))
+                .Returns(testUser);
 
             // Act: Call the RegisterCustomer method
             var result = _customerServices.RegisterCustomer(testUser);
 
             // Assert: Verify that the result is null
-            Assert.That(result, Is.Null);
+            Assert.That(result, Is.Null);  /// <test type="fail">
         }
 
     }
