@@ -3,7 +3,7 @@ using Hotel.src.Application.Services;
 using Hotel.src.Core.Entities;
 using Hotel.src.Core.Interfaces.IRepository;
 
-namespace Hotel.Tests
+namespace HotelTests.Application.Services
 {
     [TestFixture]
     public class BillingServiceTests
