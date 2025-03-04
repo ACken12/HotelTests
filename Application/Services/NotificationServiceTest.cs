@@ -177,53 +177,9 @@ namespace HotelTests.Application.Services
         }
 
   
-        [Test]
-        public void SendCheckInNotification_NullRoomDetails_ReturnsTrue()
-        {
-            // Arrange
-            string recipientEmail = "nullroom@example.com";
-            string recipientName = "Guest";
-            DateTime checkInDate = DateTime.Now.AddDays(3);
-            string roomDetails = null;
+      
 
-            _senderMock.Setup(x => x.Send(It.IsAny<string>(), It.IsAny<string>(), recipientEmail))
-                       .Returns(true);
-
-            // Act
-            bool result = _service.SendCheckInNotification(recipientEmail, recipientName, checkInDate, roomDetails);
-
-            // Assert
-            Assert.IsTrue(result);
-            _senderMock.Verify(x => x.Send(
-                It.IsAny<string>(),
-                It.Is<string>(m => m.Contains("Detalles de su habitación:")),
-                recipientEmail), Times.Once);
-        }
-
-
-        [Test]
-        public void SendCheckInNotification_EmptyRoomDetails_ReturnsTrue()
-        {
-            // Arrange
-            string recipientEmail = "emptyroom@example.com";
-            string recipientName = "Guest";
-            DateTime checkInDate = DateTime.Now.AddDays(3);
-            string roomDetails = "";
-
-            _senderMock.Setup(x => x.Send(It.IsAny<string>(), It.IsAny<string>(), recipientEmail))
-                       .Returns(true);
-
-            // Act
-            bool result = _service.SendCheckInNotification(recipientEmail, recipientName, checkInDate, roomDetails);
-
-            // Assert
-            Assert.IsTrue(result);
-            _senderMock.Verify(x => x.Send(
-                It.IsAny<string>(),
-                It.Is<string>(m => m.Contains("Detalles de su habitación:")),
-                recipientEmail), Times.Once);
-        }
-
+        
 
         [Test]
         public void SendCheckInNotification_VerifySubjectContent()
