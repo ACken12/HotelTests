@@ -7,7 +7,7 @@ using Hotel.src.Application.Services;
 using Hotel.src.Core.Entities;
 using Hotel.src.Core.Interfaces.IRepositories;
 
-namespace Hotel.Tests
+namespace HotelTests.Application.Services
 {
     [TestFixture]
     public class OccupancyReportServiceTests

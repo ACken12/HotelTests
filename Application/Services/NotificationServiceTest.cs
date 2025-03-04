@@ -4,7 +4,7 @@ using Moq;
 using Hotel.src.Application.Services;
 using Hotel.src.Core.Interfaces;
 
-namespace Hotel.Tests
+namespace HotelTests.Application.Services
 {
     [TestFixture]
     [Author("Julián Vargas", "jose.vaco_24@hotmail.com")]
