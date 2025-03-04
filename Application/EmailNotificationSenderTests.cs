@@ -96,30 +96,53 @@ public class EmailNotificationSenderTests
 
 
     [Test]
-    public void Send_InvalidEmailFormat_ReturnsFalse_ForInvalidEmails()
+    public void Send_InvalidEmailFormat_EmptyEmail_ReturnsFalse()
     {
         // Arrange
         var subject = "Test Subject";
         var message = "Test Message";
+        var invalidEmail = "invalidemail"; // Empty email
 
-        // Act & Assert
-        var invalidEmail1 = "invalidemail";
-        var result1 = _emailNotificationSender.Send(subject, message, invalidEmail1);
-        Assert.IsFalse(result1, $"El método debería retornar false para el email inválido: {invalidEmail1}");
-        _smtpClientMock.Verify(x => x.Send(It.Is<MailMessage>(m => m.To.ToString() == invalidEmail1)), Times.Never, "El método `Send` no debería ser invocado para emails inválidos.");
+        // Act
+        var result = _emailNotificationSender.Send(subject, message, invalidEmail);
 
-        // Act & Assert
-        var invalidEmail2 = "invalid@";
-        var result2 = _emailNotificationSender.Send(subject, message, invalidEmail2);
-        Assert.IsFalse(result2, $"El método debería retornar false para el email inválido: {invalidEmail2}");
-        _smtpClientMock.Verify(x => x.Send(It.Is<MailMessage>(m => m.To.ToString() == invalidEmail2)), Times.Never, "El método `Send` no debería ser invocado para emails inválidos.");
-
-        // Act & Assert
-        var invalidEmail3 = "@invalid.com";
-        var result3 = _emailNotificationSender.Send(subject, message, invalidEmail3);
-        Assert.IsFalse(result3, $"El método debería retornar false para el email inválido: {invalidEmail3}");
-        _smtpClientMock.Verify(x => x.Send(It.Is<MailMessage>(m => m.To.ToString() == invalidEmail3)), Times.Never, "El método `Send` no debería ser invocado para emails inválidos.");
+        // Assert
+        Assert.IsFalse(result, $"El método debería retornar false para el email inválido: {invalidEmail}");
+        _smtpClientMock.Verify(x => x.Send(It.Is<MailMessage>(m => m.To.ToString() == invalidEmail)), Times.Never, "El método `Send` no debería ser invocado para emails inválidos.");
     }
+
+    [Test]
+    public void Send_InvalidEmailFormat_MissingDomain_ReturnsFalse()
+    {
+        // Arrange
+        var subject = "Test Subject";
+        var message = "Test Message";
+        var invalidEmail = "invalid@"; // Missing domain part
+
+        // Act
+        var result = _emailNotificationSender.Send(subject, message, invalidEmail);
+
+        // Assert
+        Assert.IsFalse(result, $"El método debería retornar false para el email inválido: {invalidEmail}");
+        _smtpClientMock.Verify(x => x.Send(It.Is<MailMessage>(m => m.To.ToString() == invalidEmail)), Times.Never, "El método `Send` no debería ser invocado para emails inválidos.");
+    }
+
+    [Test]
+    public void Send_InvalidEmailFormat_MissingLocalPart_ReturnsFalse()
+    {
+        // Arrange
+        var subject = "Test Subject";
+        var message = "Test Message";
+        var invalidEmail = "@invalid.com"; // Missing local part
+
+        // Act
+        var result = _emailNotificationSender.Send(subject, message, invalidEmail);
+
+        // Assert
+        Assert.IsFalse(result, $"El método debería retornar false para el email inválido: {invalidEmail}");
+        _smtpClientMock.Verify(x => x.Send(It.Is<MailMessage>(m => m.To.ToString() == invalidEmail)), Times.Never, "El método `Send` no debería ser invocado para emails inválidos.");
+    }
+
 
 
 
@@ -185,7 +208,7 @@ public class EmailNotificationSenderTests
     }
 
     [Test]
-    public void Send_ValidEmails_ReturnsTrue()
+    public void Send_ValidEmail1_ReturnsTrue()
     {
         // Arrange
         var subject = "Test Subject";
@@ -196,34 +219,63 @@ public class EmailNotificationSenderTests
             .Setup(x => x.Send(It.IsAny<MailMessage>()))
             .Callback<MailMessage>(mail => capturedMail = mail);
 
-        // Act & Assert for the first valid email
+        // Act
         var validEmail1 = "user@domain.com";
         var result1 = _emailNotificationSender.Send(subject, message, validEmail1);
+
+        // Assert
         Assert.IsTrue(result1);
         _smtpClientMock.Verify(x => x.Send(It.IsAny<MailMessage>()), Times.Once);
         Assert.IsNotNull(capturedMail);
         Assert.AreEqual(validEmail1, capturedMail.To[0].Address);
-        _smtpClientMock.ResetCalls(); // Reset calls between tests
+    }
 
-        // Act & Assert for the second valid email
+    [Test]
+    public void Send_ValidEmail2_ReturnsTrue()
+    {
+        // Arrange
+        var subject = "Test Subject";
+        var message = "Test Message";
+        MailMessage capturedMail = null;
+
+        _smtpClientMock
+            .Setup(x => x.Send(It.IsAny<MailMessage>()))
+            .Callback<MailMessage>(mail => capturedMail = mail);
+
+        // Act
         var validEmail2 = "USER@DOMAIN.COM";
-        capturedMail = null;
         var result2 = _emailNotificationSender.Send(subject, message, validEmail2);
+
+        // Assert
         Assert.IsTrue(result2);
         _smtpClientMock.Verify(x => x.Send(It.IsAny<MailMessage>()), Times.Once);
         Assert.IsNotNull(capturedMail);
         Assert.AreEqual(validEmail2, capturedMail.To[0].Address);
-        _smtpClientMock.ResetCalls(); // Reset calls between tests
+    }
 
-        // Act & Assert for the third valid email
+    [Test]
+    public void Send_ValidEmail3_ReturnsTrue()
+    {
+        // Arrange
+        var subject = "Test Subject";
+        var message = "Test Message";
+        MailMessage capturedMail = null;
+
+        _smtpClientMock
+            .Setup(x => x.Send(It.IsAny<MailMessage>()))
+            .Callback<MailMessage>(mail => capturedMail = mail);
+
+        // Act
         var validEmail3 = "user.name+alias@sub.domain.co.uk";
-        capturedMail = null;
         var result3 = _emailNotificationSender.Send(subject, message, validEmail3);
+
+        // Assert
         Assert.IsTrue(result3);
         _smtpClientMock.Verify(x => x.Send(It.IsAny<MailMessage>()), Times.Once);
         Assert.IsNotNull(capturedMail);
         Assert.AreEqual(validEmail3, capturedMail.To[0].Address);
     }
+
 
 
 
