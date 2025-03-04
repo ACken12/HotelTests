@@ -1,4 +1,5 @@
 ﻿
+using System.Linq.Expressions;
 using Hotel.src.Core.Entities;
 using Hotel.src.Core.Enums;
 using Hotel.src.Core.Interfaces.IRepository;
@@ -39,15 +40,28 @@ namespace HotelTests.Infrastructure.Repositories
         [Test]
         public void AddCliente_Should_AddUserAndReturnUser_OnSuccess()
         {
-            // Arrange: Create a test user and configure SaveChanges to succeed.
-            var user = new User {NAME = "Camila" , EMAIL = "camila@example", PASSWORD = "12345", ROLE = RoleUser.User };
+            var user = new User { NAME = "Camila", EMAIL = "camila@example", PASSWORD = "12345", ROLE = RoleUser.User };
+            // Create an empty list to simulate an empty database
+            var usersList = new List<User>().AsQueryable();
+
+            // Mock the DbSet behavior
+            var mockUsersDbSet = new Mock<DbSet<User>>();
+            mockUsersDbSet.As<IQueryable<User>>().Setup(m => m.Provider).Returns(usersList.Provider);
+            mockUsersDbSet.As<IQueryable<User>>().Setup(m => m.Expression).Returns(usersList.Expression);
+            mockUsersDbSet.As<IQueryable<User>>().Setup(m => m.ElementType).Returns(usersList.ElementType);
+            mockUsersDbSet.As<IQueryable<User>>().Setup(m => m.GetEnumerator()).Returns(usersList.GetEnumerator());
+
+            // Mock Users property in DbContext
+            _mockDbContext.Setup(c => c.Users).Returns(mockUsersDbSet.Object);
+
+            // Mock SaveChanges to return 1 (indicating success)
             _mockDbContext.Setup(c => c.SaveChanges()).Returns(1);
 
-            // Act: Call the AddCliente method through the repository interface.
+            // Act: Call the AddClient method
             var result = _repository.AddClient(user);
 
-            // Assert: Verify that the user was added and that SaveChanges was called exactly once.
-            _mockUsersDbSet.Verify(u => u.Add(user), Times.Once);
+            // Assert: Verify that the user was added and SaveChanges was called exactly once
+            mockUsersDbSet.Verify(u => u.Add(user), Times.Once);
             _mockDbContext.Verify(c => c.SaveChanges(), Times.Once);
             Assert.That(result, Is.EqualTo(user));
         }
@@ -56,19 +70,30 @@ namespace HotelTests.Infrastructure.Repositories
         /// Failure test: Verifies that AddCliente throws an exception when SaveChanges fails.
         /// </summary>
         [Test]
-        public void AddCliente_Should_ThrowException_WhenSaveChangesFails()
+        public void AddCliente_Should_ReturnNull_When_EmailAlreadyExists()
         {
-            // Arrange: Create a test user and configure SaveChanges to throw an exception.
-            var user = new User { ID = 1, NAME = "Falle" };
-            _mockDbContext.Setup(c => c.SaveChanges()).Throws(new Exception("Database error"));
+            // Arrange: Create a test user
+            var existingUser = new User { NAME = "Camila", EMAIL = "camila@example", PASSWORD = "12345", ROLE = RoleUser.User };
+            var newUser = new User { NAME = "New User", EMAIL = "camila@example", PASSWORD = "67890", ROLE = RoleUser.User };
+            var usersList = new List<User> { existingUser }.AsQueryable(); // Simulating that the email already exists
 
-            // Act Execute the action under test
-            var exception = Assert.Throws<Exception>(() => _repository.AddClient(user));
+            // Mock the DbSet behavior
+            var mockUsersDbSet = new Mock<DbSet<User>>();
+            mockUsersDbSet.As<IQueryable<User>>().Setup(m => m.Provider).Returns(usersList.Provider);
+            mockUsersDbSet.As<IQueryable<User>>().Setup(m => m.Expression).Returns(usersList.Expression);
+            mockUsersDbSet.As<IQueryable<User>>().Setup(m => m.ElementType).Returns(usersList.ElementType);
+            mockUsersDbSet.As<IQueryable<User>>().Setup(m => m.GetEnumerator()).Returns(usersList.GetEnumerator());
 
-            // Assert: Verify that an exception is thrown.
-            Assert.That(exception.Message, Is.EqualTo("Database error"));
-            _mockUsersDbSet.Verify(u => u.Add(user), Times.Once);
-            _mockDbContext.Verify(c => c.SaveChanges(), Times.Once);
+            // Mock Users property in DbContext
+            _mockDbContext.Setup(c => c.Users).Returns(mockUsersDbSet.Object);
+
+            // Act: Try to add a user with the same email
+            var result = _repository.AddClient(newUser);
+
+            // Assert: Verify that Add() and SaveChanges() were NOT called
+            mockUsersDbSet.Verify(u => u.Add(It.IsAny<User>()), Times.Never);
+            _mockDbContext.Verify(c => c.SaveChanges(), Times.Never);
+            Assert.That(result, Is.Null);
         }
 
     }
