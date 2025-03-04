@@ -209,7 +209,7 @@ namespace HotelTests.Infrastructure.Repositories
         public void GetUpcomingReservations_NegativeDaysAhead_ShouldThrowArgumentException()
         {
             var ex = Assert.Throws<ArgumentException>(() => _reservationRepository.GetUpcomingReservations(-1));
-            Assert.That(ex.Message, Does.Contain("El parámetro daysAhead no puede ser negativo."));
+            Assert.That(ex.Message, Does.Contain("La cantidad de días no puede ser negativa."));
         }
     }
 }
