@@ -106,6 +106,9 @@ namespace HotelTests.Application.Services
         {
             var reservation = new Reservation(1, DateTime.Today, DateTime.Today.AddDays(3), ReservationStatus.Confirmada);
 
+            var reservationRoom = new ReservationRoom { ReservationID = 1, RoomID = 101 };
+            reservation.ReservationRooms.Add(reservationRoom);
+            
             _reservationService.UpdateReservation(reservation);
 
             _reservationRepositoryMock.Verify(repo => repo.Update(reservation), Times.Once);
