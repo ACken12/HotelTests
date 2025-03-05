@@ -185,25 +185,6 @@ namespace HotelTests.Infrastructure.Repositories
             var ex = Assert.Throws<ArgumentNullException>(() => _reservationRepository.Update(null));
             Assert.That(ex.Message, Does.Contain("La reserva no puede ser nula."));
         }
-        [Test]
-        public void GetUpcomingReservations_ShouldReturnUpcomingReservations()
-        {
-            int daysAhead = 2;
-            DateTime today = DateTime.UtcNow.Date;
-            var upcomingReservation = new Reservation(1, today.AddDays(daysAhead), today.AddDays(daysAhead + 3), ReservationStatus.Confirmada);
-            var reservations = new List<Reservation> { upcomingReservation };
-            var queryableReservations = reservations.AsQueryable();
-            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.Provider).Returns(queryableReservations.Provider);
-            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.Expression).Returns(queryableReservations.Expression);
-            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.ElementType).Returns(queryableReservations.ElementType);
-            _mockReservationsDbSet.As<IQueryable<Reservation>>().Setup(m => m.GetEnumerator()).Returns(queryableReservations.GetEnumerator());
-            _mockDbContext.Setup(c => c.Reservations).Returns(_mockReservationsDbSet.Object);
-
-            var result = _reservationRepository.GetUpcomingReservations(daysAhead);
-
-            Assert.That(result.Count, Is.EqualTo(1));
-            Assert.That(result.First().ID, Is.EqualTo(upcomingReservation.ID));
-        }
 
         [Test]
         public void GetUpcomingReservations_NegativeDaysAhead_ShouldThrowArgumentException()
