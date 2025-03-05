@@ -8,7 +8,8 @@ namespace HotelTests.Infrastructure.Repositories
 {
     [TestFixture]
     public class InvoiceDetailsRepositoryTests
-    {
+    { 
+
         private Mock<ApplicationDbContext> _mockDbContext;
         private Mock<DbSet<InvoiceDetail>> _mockInvoiceDetailsDbSet;
         private InvoiceDetailsRepository _invoiceDetailsRepository;
